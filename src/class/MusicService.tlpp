@@ -11,16 +11,6 @@ Class MusicService
 
 EndClass
 
-/*/{Protheus.doc} MusicService::FilterList
-Responsavel por buscar Músicas na API VAGALUME
-@type method 
-@version 1.0
-@author Paolini
-@since ------
-@param cSearch
-@return object, resultado de Lista de músicas
-/*/
-
 Method New() Class MusicService
 
 	::cURL := "https://api.vagalume.com.br"
@@ -30,6 +20,15 @@ Method New() Class MusicService
 
 Return
 
+/*/{Protheus.doc} MusicService::FilterList
+Responsavel por buscar Músicas na API VAGALUME
+@type method 
+@version 1.0
+@author Paolini
+@since ------
+@param cSearch
+@return object, resultado de Lista de músicas
+/*/
 
 Method FilterList(cSearch) Class MusicService
 
@@ -52,8 +51,8 @@ Method FilterList(cSearch) Class MusicService
 		Return oMusicListResult
 	EndIf
 
-	oJsonQueryParams := JsonObject():new()
-	oRest := HTTPClient():new(::cURL)
+	oJsonQueryParams := JsonObject():New()
+	oRest := HTTPClient():New(::cURL)
 	cSearchParsed := allTrim(upper(cSearch))
 	cPath := "/search.artmus"
 
@@ -85,10 +84,11 @@ Method FilterList(cSearch) Class MusicService
     Return oMusicListResult
   EndIf
 
-	oMusicModel := MusicModel():New()
 	aData := {}
 
   For nIndexMusicList := 1 to Len(oResult['response']['docs'])
+
+		oMusicModel := MusicModel():New()
 
     oMusicModel:cApiID := If(oResult['response']['docs'][nIndexMusicList]:hasProperty("id"), oResult['response']['docs'][nIndexMusicList]["id"], "")
     oMusicModel:cTitulo :=  If(oResult['response']['docs'][nIndexMusicList]:hasProperty("title"), oResult['response']['docs'][nIndexMusicList]["title"], "")
@@ -97,7 +97,7 @@ Method FilterList(cSearch) Class MusicService
 
 		AAdd(aData, oMusicModel)
 
-  Next
+  Next nIndexMusicList
 
 	oMusicListResult["data"] := aData
 
