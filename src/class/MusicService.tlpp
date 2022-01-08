@@ -36,7 +36,7 @@ Method FilterList(cSearch) Class MusicService
 	Local oJsonQueryParams as Object
 	Local oResult as Object
 	Local cPath as Character
-  Local nIndexMusicList as Numeric
+	Local nIndexMusicList as Numeric
 	Local oMusicModel as Object
 	Local oMusicListResult as Object
 	Local aData as array
@@ -76,28 +76,28 @@ Method FilterList(cSearch) Class MusicService
 	oResult := JsonObject():New()
 	oResult:FromJSON(oRest:GetResult())
 
-  If (ValType(oResult['response']) == "NIL" .and. ValType(oResult['response']['docs']) == "NIL")
+	If (ValType(oResult['response']) == "NIL" .and. ValType(oResult['response']['docs']) == "NIL")
 
 		oMusicListResult["error"] := "Erro na chamada API"
 		oMusicListResult["message"] := "resposta não encontrada na API. "
 
-    Return oMusicListResult
-  EndIf
+		Return oMusicListResult
+	EndIf
 
 	aData := {}
 
-  For nIndexMusicList := 1 to Len(oResult['response']['docs'])
+	For nIndexMusicList := 1 to Len(oResult['response']['docs'])
 
 		oMusicModel := MusicModel():New()
 
-    oMusicModel:cApiID := If(oResult['response']['docs'][nIndexMusicList]:hasProperty("id"), oResult['response']['docs'][nIndexMusicList]["id"], "")
-    oMusicModel:cTitulo :=  If(oResult['response']['docs'][nIndexMusicList]:hasProperty("title"), oResult['response']['docs'][nIndexMusicList]["title"], "")
-    oMusicModel:cBanda := If(oResult['response']['docs'][nIndexMusicList]:hasProperty("band"), oResult['response']['docs'][nIndexMusicList]["band"], "")
-    oMusicModel:cCodigoFilial := "01"
+		oMusicModel:cApiID := If(oResult['response']['docs'][nIndexMusicList]:hasProperty("id"), oResult['response']['docs'][nIndexMusicList]["id"], "")
+		oMusicModel:cTitulo :=  If(oResult['response']['docs'][nIndexMusicList]:hasProperty("title"), oResult['response']['docs'][nIndexMusicList]["title"], "")
+		oMusicModel:cBanda := If(oResult['response']['docs'][nIndexMusicList]:hasProperty("band"), oResult['response']['docs'][nIndexMusicList]["band"], "")
+		oMusicModel:cCodigoFilial := "01"
 
 		AAdd(aData, oMusicModel)
 
-  Next nIndexMusicList
+	Next nIndexMusicList
 
 	oMusicListResult["data"] := aData
 
