@@ -1,0 +1,27 @@
+#include 'totvs.ch'
+#include 'topconn.ch'
+
+Class MusicModel 
+
+  Public Data cCodigoFilial as Character
+  Public Data cTitulo as Character
+  Public Data cBanda as Character
+  Public Data cApiID as Character
+  Public Data nPlayListID as Numeric
+  Public Data cCodigo as Character
+
+   Public Method New() Constructor
+
+EndClass
+
+Method New() Class MusicModel
+
+  ::cCodigoFilial := ""
+  ::cTitulo := ""
+  ::cBanda := ""
+  ::cApiID := ""
+  ::cCodigo := ""
+
+  ::nPlayListID := 0
+  
+Return

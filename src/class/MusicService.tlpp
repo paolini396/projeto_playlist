@@ -1,0 +1,106 @@
+#include 'totvs.ch'
+#include "protheus.ch"
+
+Class MusicService
+
+	Public Data cURL as Character
+	Public Data aHeaderRequest as Array
+
+	Public Method New() Constructor
+	Public Method FilterList() Constructor
+
+EndClass
+
+/*/{Protheus.doc} MusicService::FilterList
+Responsavel por buscar Músicas na API VAGALUME
+@type method 
+@version 1.0
+@author Paolini
+@since ------
+@param cSearch
+@return object, resultado de Lista de músicas
+/*/
+
+Method New() Class MusicService
+
+	::cURL := "https://api.vagalume.com.br"
+
+	::aHeaderRequest := {}
+	Aadd(::aHeaderRequest, "Content-Type: application/json")
+
+Return
+
+
+Method FilterList(cSearch) Class MusicService
+
+	Local oRest as object
+	Local oJsonQueryParams as Object
+	Local oResult as Object
+	Local cPath as Character
+  Local nIndexMusicList as Numeric
+	Local oMusicModel as Object
+	Local oMusicListResult as Object
+	Local aData as array
+
+	oMusicListResult := JsonObject():new()
+
+	If Empty(cSearch)
+
+		oMusicListResult["error"] := "Campo Obrigatório"
+		oMusicListResult["message"] := "Digite nome de uma música para filtrar."
+
+		Return oMusicListResult
+	EndIf
+
+	oJsonQueryParams := JsonObject():new()
+	oRest := HTTPClient():new(::cURL)
+	cSearchParsed := allTrim(upper(cSearch))
+	cPath := "/search.artmus"
+
+	oJsonQueryParams['q'] := cSearchParsed
+	oJsonQueryParams['limit'] := "5"
+
+	oRest:setPath(cPath)
+	oRest:SetGetQueryParams(oJsonQueryParams)
+
+	If oRest:Get(::aHeaderRequest) .OR. !Empty( oRest:GetResult())
+
+		If (oRest:oResponseh:cStatusCode != "200") // Válida request
+
+			oMusicListResult["error"] := oRest:GetLastError()
+			oMusicListResult["message"] := "Erro ao chamar API"
+
+			Return oMusicListResult
+		EndIf
+	EndIf
+
+	oResult := JsonObject():New()
+	oResult:FromJSON(oRest:GetResult())
+
+  If (ValType(oResult['response']) == "NIL" .and. ValType(oResult['response']['docs']) == "NIL")
+
+		oMusicListResult["error"] := "Erro na chamada API"
+		oMusicListResult["message"] := "resposta não encontrada na API. "
+
+    Return oMusicListResult
+  EndIf
+
+	oMusicModel := MusicModel():New()
+	aData := {}
+
+  For nIndexMusicList := 1 to Len(oResult['response']['docs'])
+
+    oMusicModel:cApiID := If(oResult['response']['docs'][nIndexMusicList]:hasProperty("id"), oResult['response']['docs'][nIndexMusicList]["id"], "")
+    oMusicModel:cTitulo :=  If(oResult['response']['docs'][nIndexMusicList]:hasProperty("title"), oResult['response']['docs'][nIndexMusicList]["title"], "")
+    oMusicModel:cBanda := If(oResult['response']['docs'][nIndexMusicList]:hasProperty("band"), oResult['response']['docs'][nIndexMusicList]["band"], "")
+    oMusicModel:cCodigoFilial := "01"
+
+		AAdd(aData, oMusicModel)
+
+  Next
+
+	oMusicListResult["data"] := aData
+
+Return oMusicListResult
+
+

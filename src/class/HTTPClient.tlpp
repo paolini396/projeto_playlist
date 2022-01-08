@@ -1,0 +1,43 @@
+#include 'totvs.ch'
+#include 'topconn.ch'
+
+Class HTTPClient from FWRest
+
+	Public Method New() Constructor
+	Public Method SetPath() Constructor
+	Public Method SetGetQueryParams() Constructor
+
+EndClass
+
+Method New(cURL) Class HTTPClient
+	_Super:New(cURL)
+Return
+
+Method SetPath(cPath) Class HTTPClient
+	_Super:setPath(cPath)
+Return
+
+Method SetGetQueryParams(oParams) Class HTTPClient
+
+	Local oParams as Object
+	Local aNames as Array
+	Local nIndexName as Numeric
+	Local cParsedPath as Character
+	Local nFirstIndex as Numeric
+
+	cParsedPath := ""+Self:cPath+""
+	aNames := oParams:GetNames()
+
+	nFirstIndex := 1
+
+	For nIndexName := 1 to len(aNames)
+		cParsedPath += If(nIndexName == nFirstIndex, "?", "&")
+		
+		cParsedPath += ""+aNames[nIndexName]+"="+oParams[aNames[nIndexName]]+""
+	Next
+
+	::setPath(cParsedPath)
+Return
+
+
+

@@ -1,0 +1,204 @@
+#Include "TOTVS.CH"
+#Include 'Set.CH'
+
+
+User Function Test()
+
+	Local oMusicService as Object
+	Local oData as Object
+	
+	oMusicService := MusicService():new()
+	oData := oMusicService:FilterList("RITA")
+
+Return
+
+/*/{Protheus.doc} User Function MusicList
+  @author Paolini
+  @since 27/12/2021
+  @version 1.0
+  @description Tela para Buscar músicas na API VAGALUME
+  @type  Function
+/*/
+User Function MusicList()
+
+	Local aArea := GetArea()
+	Local oLayer as object
+	Local aSize as array
+	Private cTitulo  := "Lista de Músicas"
+	Private oDlgTela as object
+	Private oBrowse as object
+	Private oCbxFiltro as object
+	Private cSearch := Space(200)
+	Private cAliasQry := GetNextAlias()
+
+	aSize	:= FWGetDialogSize( oMainWnd )
+	oDlgtela := MsDialog():New( aSize[1], aSize[2], aSize[3], aSize[4], cTitulo,,,, nOr( WS_VISIBLE, WS_POPUP ),,,,, .T.,,,, .F. )
+	oLayer := FWLayer():New()
+	oLayer:Init(oDlgTela,.F.,.T.)
+
+	//-- DIVISOR DE TELA SUPEIROR [ FILTRO ]
+
+	oLayer:AddLine("LINESUP", 25 )
+	oLayer:AddCollumn("BOX01", 100,, "LINESUP" )
+	oLayer:AddWindow("BOX01", "PANEL01", "Filtros", 100, .F.,,, "LINESUP" ) //"Filtros"
+	//-- DIVISOR DE TELA INFERIOR [ GRID ]
+	oLayer:AddLine("LINEINF", 75 )
+	oLayer:AddCollumn( "BOX02", 100,, "LINEINF" )
+	oLayer:AddWindow( "BOX02", "PANEL02", cTitulo	, 100, .F.,,, "LINEINF" )
+
+	FPanel01( oLayer:GetWinPanel( "BOX01", "PANEL01", "LINESUP" ) ) //Contrução do Painel de Filtros
+	FPanel02( oLayer:GetWinPanel( "BOX02", "PANEL02", "LINEINF" ) ) //Contrução do Painel de Musicas
+
+	oDlgtela:Activate()
+	RestArea(aArea)
+
+Return
+
+Static Function FPanel01( oPanel )
+
+	Local bFiltrar	:=	Nil
+
+	//-- Inclui a borda pora apresentacao dos componentes em tela
+	TGroup():New( 005, 005, (oPanel:nHeight/2) - 005, (oPanel:nWidth/2) - 010 , "", oPanel,,, .T. ) //"Filtros"
+
+	TSay():New( 010, 250, { || "Digite o nome da Música"    }, oPanel,,,,,, .T.,,, 110, 010 )
+	TGet():New( 020, 250, { |u| If(PCount()>0,cSearch := u, cSearch)},oPanel,200,010,'@!',,CLR_BLACK,CLR_WHITE,,,,.T.,"",,,.F.,.F.,,.F.,.F.,"","cSearch",,)
+
+	//Inclui botao filtrar
+	bFiltrar := { || HandleSearch("Buscando Música") }
+	TButton():New( 020,460, "Buscar", oPanel, bFiltrar, 050, 013,,,, .T. ) //"Filtrar"
+
+Return()
+
+
+Static Function FPanel02( oPanel )
+
+	Local bProcessa := { |xProc| fProcessa(xProc) }
+	Local aFilter	as Array
+
+	oBrowse := FWFormBrowse():New()
+	oBrowse:SetDescription(cTitulo)
+	oBrowse:SetTemporary(.T.)
+	oBrowse:SetAlias(cAliasQry)
+	oBrowse:SetCacheView(.F.)
+	oBrowse:SetDataQuery()
+
+	oBrowse:AddMarkColumns({||IIf((oBrowse:Alias())->T_OK == "1", "LBOK", "LBNO")}, {|| MarkBrw(oBrowse)}, {|| FWMsgRun( ,{|| MarkAllBrw(oBrowse) },"Aguarde","Marcando/Desmarcando todos...") })
+	oBrowse:SetColumns( GetColumns(cAliasQry)[1] )
+
+	oBrowse:SetDBFFilter(.T.)
+	oBrowse:SetUseFilter()
+	aFilter := GetColumns(cAliasQry)[2]
+	oBrowse:SetFieldFilter(aFilter)
+	oBrowse:DisableDetails()
+
+	// ---------------------------------------------+
+	//  Faz o inserção dos botoes para o browse     |
+	// ---------------------------------------------+
+
+	oBrowse:AddButton( OemToAnsi("Fechar")		              , {|| oDlgTela:End() } 	                  ,, 2 )
+	oBrowse:AddButton( OemToAnsi("Negociar")                , {|| eVal( bProcessa, "NEGOCIAR" ) } 	  ,, 2 )
+	oBrowse:AddButton( OemToAnsi("Imprimir Boleto")         , {|| Alert("BOLETO") } 	                ,, 2 )
+
+Return()
+
+
+Static Function HandleSearch(cMensagem)
+
+	Default cMensagem	:=  ""
+
+	If !Empty(cMensagem)
+		FWMsgRun( ,{|| UpdateBrw() },"Aguarde",cMensagem)
+	Else
+		CursorWait()
+		UpdateBrw()
+		CursorArrow()
+	EndIf
+
+Return
+
+Static Function UpdateBrw()
+
+	Local oResult   := Nil
+	Local oJson := JsonObject():New()
+	Local cTextJson := '{"docs":[{"id":"l3ade68b8g02c3f0b3","langID":1,"url":"/tierry/rita.html","title":"Rita","band":"Tierry"},{"id":"l3ade68b8g3ad901b3","langID":2,"url":"/sam-feldt/follow-me-with-rita-ora.html","title":"Follow Me (With Rita Ora)","band":"Sam Feldt"},{"id":"l3ade68b7gf5e1cea3","langID":6,"url":"/chico-buarque/la-rita-a-rita.html","title":"La Rita - (a Rita)","band":"Chico Buarque"}]}'
+	
+  oResult := oJson:FromJson(cTextJson)
+	// oBrowse:Data():DeActivate(.T.)
+	// oBrowse:SetQuery()
+	// oBrowse:Data():Activate()
+	// oBrowse:UpdateBrowse(.T.)
+	// oBrowse:GoBottom()
+	// oBrowse:GoTo(1,.T.)
+	// oBrowse:Refresh(.T.)~
+	// oBrowse:ExecuteFilter( .T. )
+Return
+
+Static Function GetColumns(cAlias)
+
+	Local aArea := GetArea()
+	Local cCampo as character
+	Local cTipo as character
+	Local aCampos := {}
+	Local aColumns := {}
+	Local aFilters := {}
+	Local nX := 0
+	Local nLinha := 0
+
+	aAdd( aCampos, "ZK2_FILIAL" )
+	aAdd( aCampos, "ZK2_FILIAL" )
+	aAdd( aCampos, "ZK2_BANDA" )
+	aAdd( aCampos, "ZK2_TITULO" )
+	aAdd( aCampos, "ZK2_PLIST" )
+
+	//|Adiciona a coluna de legenda |
+	AAdd(aColumns,FWBrwColumn():New())
+	nLinha := Len(aColumns)
+
+	aColumns[nLinha]:SetTitle("")
+	aColumns[nLinha]:SetType("C")
+	aColumns[nLinha]:SetPicture("@BMP")
+	aColumns[nLinha]:SetSize(1)
+	aColumns[nLinha]:SetDecimal(0)
+	aColumns[nLinha]:SetImage(.T.)
+
+	For nX := 1 To Len(aCampos)
+
+		If !Empty( FwSx3Util():GetDescription( aCampos[nX] ) )
+			AAdd(aColumns,FWBrwColumn():New())
+			nLinha	:= Len(aColumns)
+			cCampo 	:= GetSx3Cache( aCampos[nX], "X3_CAMPO" )
+			cTipo   := GetSx3Cache( cCampo, "X3_TIPO" )
+			aColumns[nLinha]:SetType( cTipo )
+
+			//|Monta campos do filtro |
+			If cTipo != "D"
+				aAdd( aFilters,  {;
+					cCampo,;
+					GetSx3Cache( cCampo, "X3_TITULO" ),;
+					cTipo,;
+					GetSx3Cache( cCampo, "X3_TAMANHO" ),;
+					GetSx3Cache( cCampo, "X3_DECIMAL" ),;
+					PesqPict( "ZK2", cCampo );
+					})
+			EndIf
+
+			If cTipo == "D"
+				aColumns[nLinha]:SetData( &("{|| StoD("  + "('"+cAlias+"')->" + cCampo + ") }") )
+			Else
+				aColumns[nLinha]:SetData( &("{|| " + "('"+cAlias+"')->" + cCampo + " }") )
+			EndIf
+
+			aColumns[nLinha]:SetTitle( GetSx3Cache( cCampo, "X3_TITULO" ) )
+			aColumns[nLinha]:SetSize( GetSx3Cache( cCampo, "X3_TAMANHO" ) )
+			aColumns[nLinha]:SetDecimal( GetSx3Cache( cCampo, "X3_DECIMAL" ) )
+			aColumns[nLinha]:SetPicture( PesqPict( "ZK2", cCampo ) )
+
+			aColumns[nLinha]:SetDoubleClick({|| MarkBrw(oBrowse) })
+		EndIf
+
+	Next nX
+
+	RestArea(aArea)
+
+Return { aColumns, aFilters }
