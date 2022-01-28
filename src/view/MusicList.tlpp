@@ -81,6 +81,8 @@ Static Function FPanel02( oPanel )
 
 	Local nIndex as numeric
 
+	Local bAddPlayList	:=	Nil
+
 
 	aBrwModel := {}
 	aBrwCol := {}
@@ -92,6 +94,9 @@ Static Function FPanel02( oPanel )
 
 	aAdd(aBrwModel, {'Nome'        , '@!'    , 25, 10, 1})
 	aAdd(aBrwModel, {'Banda'  , '@!'    , 25, 00, 1})
+
+	bAddPlayList := { || HandleAddPlayList("Listando Play List") }
+	TButton():New( 020,460, "Adicionar a Play List", oPanel, bAddPlayList, 050, 013,,,, .T. ) 
 
 	for nIndex := 1 to Len(aBrwModel)
 
@@ -130,6 +135,20 @@ Static Function HandleSearch(cMensagem)
 
 Return
 
+Static Function HandleAddPlayList(cMensagem)
+
+	Default cMensagem	:=  ""
+
+	If !Empty(cMensagem)
+		FWMsgRun( ,{|| },"Aguarde",cMensagem)
+	Else
+		CursorWait()
+		//UpdateBrw()
+		CursorArrow()
+	EndIf
+
+Return
+
 Static Function UpdateBrw()
 	Local oMusicService as Object
 	Local oMusicList as Object
@@ -138,7 +157,7 @@ Static Function UpdateBrw()
 	oMusicService := MusicService():new()
 	oMusicList := oMusicService:FilterList(cSearch)
 
-	If (Empty(oMusicList["error"]) .and. Empty(oMusicList["message"]))
+	If (!Empty(oMusicList["error"]) .and. !Empty(oMusicList["message"]))
 
 		MsgAlert(oMusicList["message"],oMusicList["error"])
 
@@ -151,7 +170,7 @@ Static Function UpdateBrw()
 		aAdd(aBrwData, {oMusicList["data"][nIndex]["CTITULO"], oMusicList["data"][nIndex]["CBANDA"]})
 
 	Next nIndex
-
+	
 	oBrowse:DeActivate(.T.)
 	oBrowse:SetDataArray()
 	oBrowse:SetArray(aBrwData)

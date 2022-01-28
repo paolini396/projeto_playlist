@@ -53,7 +53,7 @@ Method FilterList(cSearch) Class MusicService
 
 	oJsonQueryParams := JsonObject():New()
 	oRest := HTTPClient():New(::cURL)
-	cSearchParsed := allTrim(upper(cSearch))
+	cSearchParsed := FwNoAccent(allTrim(upper(cSearch)))
 	cPath := "/search.artmus"
 
 	oJsonQueryParams['q'] := cSearchParsed
