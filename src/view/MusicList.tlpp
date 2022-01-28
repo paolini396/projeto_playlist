@@ -1,13 +1,14 @@
 #Include "TOTVS.CH"
+#INCLUDE "TOPCONN.CH"
 #Include 'Set.CH'
 
 
 User Function Test()
 	Local oMusicService as Object
-	Local oData as Object
-	
+	Local oMusicList as Object
+
 	oMusicService := MusicService():new()
-	oData := oMusicService:FilterList("RITA")
+	oMusicList := oMusicService:FilterList("RITA")
 
 Return
 
@@ -29,6 +30,8 @@ User Function MusicList()
 	Private oCbxFiltro as object
 	Private cSearch := Space(200)
 	Private cAliasQry := GetNextAlias()
+
+	Private aBrwData  as array
 
 	aSize	:= FWGetDialogSize( oMainWnd )
 	oDlgtela := MsDialog():New( aSize[1], aSize[2], aSize[3], aSize[4], cTitulo,,,, nOr( WS_VISIBLE, WS_POPUP ),,,,, .T.,,,, .F. )
@@ -72,32 +75,43 @@ Return()
 
 Static Function FPanel02( oPanel )
 
-	Local bProcessa := { |xProc| fProcessa(xProc) }
-	Local aFilter	as Array
+	Local aBrwModel as array
+	Local aBrwCol as array
+	Local aBrwSeek as array
 
-	oBrowse := FWFormBrowse():New()
-	oBrowse:SetDescription(cTitulo)
-	oBrowse:SetTemporary(.T.)
-	oBrowse:SetAlias(cAliasQry)
-	oBrowse:SetCacheView(.F.)
-	oBrowse:SetDataQuery()
+	Local nIndex as numeric
 
-	oBrowse:AddMarkColumns({||IIf((oBrowse:Alias())->T_OK == "1", "LBOK", "LBNO")}, {|| MarkBrw(oBrowse)}, {|| FWMsgRun( ,{|| MarkAllBrw(oBrowse) },"Aguarde","Marcando/Desmarcando todos...") })
-	oBrowse:SetColumns( GetColumns(cAliasQry)[1] )
 
-	oBrowse:SetDBFFilter(.T.)
-	oBrowse:SetUseFilter()
-	aFilter := GetColumns(cAliasQry)[2]
-	oBrowse:SetFieldFilter(aFilter)
-	oBrowse:DisableDetails()
+	aBrwModel := {}
+	aBrwCol := {}
+	aBrwData := {}
+	aBrwSeek := {}
 
-	// ---------------------------------------------+
-	//  Faz o inserção dos botoes para o browse     |
-	// ---------------------------------------------+
+	aAdd(aBrwData, {"TESTE 01", "Paolini"} )
+	aAdd(aBrwData, {"TESTE 02", "Paolini"} )
 
-	oBrowse:AddButton( OemToAnsi("Fechar")		              , {|| oDlgTela:End() } 	                  ,, 2 )
-	oBrowse:AddButton( OemToAnsi("Negociar")                , {|| eVal( bProcessa, "NEGOCIAR" ) } 	  ,, 2 )
-	oBrowse:AddButton( OemToAnsi("Imprimir Boleto")         , {|| Alert("BOLETO") } 	                ,, 2 )
+	aAdd(aBrwModel, {'Nome'        , '@!'    , 25, 10, 1})
+	aAdd(aBrwModel, {'Banda'  , '@!'    , 25, 00, 1})
+
+	for nIndex := 1 to Len(aBrwModel)
+
+		aAdd(aBrwCol, FwBrwColumn():New())
+
+		aBrwCol[Len(aBrwCol)]:SetData( &('{ || aBrwData[oBrowse:nAt,' + cValToChar(nIndex) + ']}') )
+		aBrwCol[Len(aBrwCol)]:SetTitle(aBrwModel[nIndex,1])
+		aBrwCol[Len(aBrwCol)]:SetPicture(aBrwModel[nIndex,2])
+		aBrwCol[Len(aBrwCol)]:SetSize(aBrwModel[nIndex,3])
+		aBrwCol[Len(aBrwCol)]:SetDecimal(aBrwModel[nIndex,4])
+		aBrwCol[Len(aBrwCol)]:SetAlign(aBrwModel[nIndex,5])
+
+	Next nIndex
+
+	oBrowse := FwBrowse():New()
+	oBrowse:SetDataArray()
+	oBrowse:SetArray(aBrwData)
+	oBrowse:SetColumns(aBrwCol)
+	oBrowse:SetOwner(oPanel)
+	oBrowse:Activate()
 
 Return()
 
@@ -117,12 +131,32 @@ Static Function HandleSearch(cMensagem)
 Return
 
 Static Function UpdateBrw()
+	Local oMusicService as Object
+	Local oMusicList as Object
+	Local nIndex as numeric
 
-	Local oResult   := Nil
-	Local oJson := JsonObject():New()
-	Local cTextJson := '{"docs":[{"id":"l3ade68b8g02c3f0b3","langID":1,"url":"/tierry/rita.html","title":"Rita","band":"Tierry"},{"id":"l3ade68b8g3ad901b3","langID":2,"url":"/sam-feldt/follow-me-with-rita-ora.html","title":"Follow Me (With Rita Ora)","band":"Sam Feldt"},{"id":"l3ade68b7gf5e1cea3","langID":6,"url":"/chico-buarque/la-rita-a-rita.html","title":"La Rita - (a Rita)","band":"Chico Buarque"}]}'
-	
-  oResult := oJson:FromJson(cTextJson)
+	oMusicService := MusicService():new()
+	oMusicList := oMusicService:FilterList(cSearch)
+
+	If (Empty(oMusicList["error"]) .and. Empty(oMusicList["message"]))
+
+		MsgAlert(oMusicList["message"],oMusicList["error"])
+
+		Return
+	EndIf
+
+	aBrwData := {}
+	for nIndex := 1 to Len(oMusicList["data"])
+
+		aAdd(aBrwData, {oMusicList["data"][nIndex]["CTITULO"], oMusicList["data"][nIndex]["CBANDA"]})
+
+	Next nIndex
+
+	oBrowse:DeActivate(.T.)
+	oBrowse:SetDataArray()
+	oBrowse:SetArray(aBrwData)
+	oBrowse:Activate()
+	oBrowse:UpdateBrowse(.T.)
 	// oBrowse:Data():DeActivate(.T.)
 	// oBrowse:SetQuery()
 	// oBrowse:Data():Activate()

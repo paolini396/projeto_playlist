@@ -90,8 +90,8 @@ Method FilterList(cSearch) Class MusicService
 
 		oMusicModel := MusicModel():New()
 
-		oMusicModel:cApiID := If(oResult['response']['docs'][nIndexMusicList]:hasProperty("id"), oResult['response']['docs'][nIndexMusicList]["id"], "")
 		oMusicModel:cTitulo :=  If(oResult['response']['docs'][nIndexMusicList]:hasProperty("title"), oResult['response']['docs'][nIndexMusicList]["title"], "")
+		oMusicModel:cApiID := If(oResult['response']['docs'][nIndexMusicList]:hasProperty("id"), oResult['response']['docs'][nIndexMusicList]["id"], "")
 		oMusicModel:cBanda := If(oResult['response']['docs'][nIndexMusicList]:hasProperty("band"), oResult['response']['docs'][nIndexMusicList]["band"], "")
 		oMusicModel:cCodigoFilial := "01"
 
