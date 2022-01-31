@@ -2,16 +2,6 @@
 #INCLUDE "TOPCONN.CH"
 #Include 'Set.CH'
 
-
-User Function Test()
-	Local oMusicService as Object
-	Local oMusicList as Object
-
-	oMusicService := MusicService():new()
-	oMusicList := oMusicService:FilterList("RITA")
-
-Return
-
 /*/{Protheus.doc} User Function MusicList
   @author Paolini
   @since 27/12/2021

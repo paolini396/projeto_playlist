@@ -7,7 +7,7 @@ Class MusicService
 	Public Data aHeaderRequest as Array
 
 	Public Method New() Constructor
-	Public Method FilterList() Constructor
+	Public Method FilterList()
 
 EndClass
 

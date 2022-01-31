@@ -4,8 +4,8 @@
 Class HTTPClient from FWRest
 
 	Public Method New() Constructor
-	Public Method SetPath() Constructor
-	Public Method SetGetQueryParams() Constructor
+	Public Method SetPath() 
+	Public Method SetGetQueryParams() 
 
 EndClass
 
