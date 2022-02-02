@@ -58,7 +58,7 @@ Static Function FPanel01( oPanel )
 
 	//Inclui botao filtrar
 	bFiltrar := { || HandleSearch("Buscando Música") }
-	TButton():New( 020,460, "Buscar", oPanel, bFiltrar, 050, 013,,,, .T. ) //"Filtrar"
+	TButton():New( 020,460, "Buscar", oPanel, bFiltrar, 060, 013,,,, .T. ) //"Filtrar"
 
 Return()
 
@@ -85,8 +85,6 @@ Static Function FPanel02( oPanel )
 	aAdd(aBrwModel, {'Nome'        , '@!'    , 25, 10, 1})
 	aAdd(aBrwModel, {'Banda'  , '@!'    , 25, 00, 1})
 
-	bAddPlayList := { || HandleAddPlayList("Listando Play List") }
-	TButton():New( 020,460, "Adicionar a Play List", oPanel, bAddPlayList, 050, 013,,,, .T. ) 
 
 	for nIndex := 1 to Len(aBrwModel)
 
@@ -102,10 +100,18 @@ Static Function FPanel02( oPanel )
 	Next nIndex
 
 	oBrowse := FwBrowse():New()
+
+	oBrowse:DisableReport()
+
 	oBrowse:SetDataArray()
 	oBrowse:SetArray(aBrwData)
 	oBrowse:SetColumns(aBrwCol)
+
 	oBrowse:SetOwner(oPanel)
+
+	bAddPlayList := { || HandleSearch("Buscando Play List") }
+	TButton():New( 010, 185, "Adicionar a Play List",oPanel,bAddPlayList, 060, 012,,,.F.,.T.,.F.,,.F.,,,.F. )
+
 	oBrowse:Activate()
 
 Return()
