@@ -1,6 +1,9 @@
 #Include "TOTVS.CH"
 #INCLUDE "TOPCONN.CH"
 #Include 'Set.CH'
+#Include 'FWMVCDEF.ch'
+#include "parmtype.ch"
+#include "dbstruct.ch"
 
 /*/{Protheus.doc} User Function MusicList
   @author Paolini
@@ -14,14 +17,17 @@ User Function MusicList()
 	Local aArea := GetArea()
 	Local oLayer as object
 	Local aSize as array
+
 	Private cTitulo  := "Lista de Músicas"
 	Private oDlgTela as object
 	Private oBrowse as object
 	Private oCbxFiltro as object
 	Private cSearch := Space(200)
 	Private cAliasQry := GetNextAlias()
-
+	Private cAliasTmp := GetNextAlias()
+	Private cTableName := ""
 	Private aBrwData  as array
+	Private aRotina		:= MenuDef()
 
 	aSize	:= FWGetDialogSize( oMainWnd )
 	oDlgtela := MsDialog():New( aSize[1], aSize[2], aSize[3], aSize[4], cTitulo,,,, nOr( WS_VISIBLE, WS_POPUP ),,,,, .T.,,,, .F. )
@@ -63,7 +69,7 @@ Static Function FPanel01( oPanel )
 Return()
 
 
-Static Function FPanel02( oPanel )
+/* Static Function FPanel02( oPanel )
 
 	Local aBrwModel as array
 	Local aBrwCol as array
@@ -72,7 +78,6 @@ Static Function FPanel02( oPanel )
 	Local nIndex as numeric
 
 	Local bAddPlayList	:=	Nil
-
 
 	aBrwModel := {}
 	aBrwCol := {}
@@ -84,6 +89,9 @@ Static Function FPanel02( oPanel )
 
 	aAdd(aBrwModel, {'Nome'        , '@!'    , 25, 10, 1})
 	aAdd(aBrwModel, {'Banda'  , '@!'    , 25, 00, 1})
+	
+	bAddPlayList := { || HandleSearch("Buscando Play List") }
+	TButton():New( 001, 185, "Adicionar a Play List",oPanel,bAddPlayList, 060, 013,,,, .T. )
 
 
 	for nIndex := 1 to Len(aBrwModel)
@@ -99,9 +107,9 @@ Static Function FPanel02( oPanel )
 
 	Next nIndex
 
-	oBrowse := FwBrowse():New()
+	oBrowse := FWBrowse():New()
 
-	oBrowse:DisableReport()
+	//oBrowse:DisableReport()
 
 	oBrowse:SetDataArray()
 	oBrowse:SetArray(aBrwData)
@@ -109,13 +117,100 @@ Static Function FPanel02( oPanel )
 
 	oBrowse:SetOwner(oPanel)
 
-	bAddPlayList := { || HandleSearch("Buscando Play List") }
-	TButton():New( 010, 185, "Adicionar a Play List",oPanel,bAddPlayList, 060, 012,,,.F.,.T.,.F.,,.F.,,,.F. )
 
 	oBrowse:Activate()
 
+Return() */
+
+Static Function FPanel02( oPanel )
+
+	Local aArea       := GetArea()
+  Local cFunBkp     := FunName()
+  Local aFields     := {}
+  Local aBrowse     := {}
+  Local aIndex      := {}
+	Local aValores    := {}
+	local oFWTTable     as object
+
+	Local cSQLInsert := ""
+
+	Local nField      := 0
+	Local nValue     := 0
+
+	aAdd(aFields, { "TMP_BANDA", "C", 50, 0 })
+	aAdd(aFields, { "TMP_NOME",  "C", 50, 0 })
+
+	oFWTTable := FWTemporaryTable():new(cAliasTmp, aFields)
+
+	oFWTTable:AddIndex("01", {"TMP_BANDA"})
+	oFWTTable:AddIndex("02", {"TMP_NOME"})
+	oFWTTable:AddIndex("93", {"TMP_BANDA", "TMP_NOME"})
+
+	oFWTTable:Create()
+
+	cTableName := oFWTTable:getRealName()
+
+	//Definindo as colunas que serão usadas no browse
+  aAdd(aBrowse, {"Banda",    "TMP_BANDA", "C", 06, 0, "@!"})
+  aAdd(aBrowse, {"Nome", "TMP_NOME", "C", 50, 0, "@!"})
+
+	aAdd(aValores, {"Paolini", "Musica Paolini"})
+	aAdd(aValores, {"Teste banda", "Musica testando"})
+
+  //-------------------------------
+    //Inserção de dados via INSERT
+  //-------------------------------
+ cSQLInsert := "INSERT INTO "
+ cSQLInsert += cTableName
+ cSQLInsert += " ("
+	for nField := 1 to Len(aFields)
+		cSQLInsert += aFields[nField][1]
+cSQLInsert += IIf(nField == len(aFields), "", ",")
+	next nField
+	cSQLInsert += ") "
+	cSQLInsert += "VALUES "
+	for nValue := 1 to Len(aValores)
+		cSQLInsert += " ("
+		cSQLInsert += "'"
+		cSQLInsert += aValores[nValue][1]
+		cSQLInsert += "'"
+		cSQLInsert += ","
+		cSQLInsert += "'"
+		cSQLInsert += aValores[nValue][2]
+		cSQLInsert += "'"
+		cSQLInsert += ")"
+		cSQLInsert += IIf(nValue == len(aValores), ";", ",")
+	next nValue
+
+	begin transaction
+		if(TCSQLExec(cSQLInsert) < 0)
+				DisarmTransaction()
+				UserException(TCSQlError())
+		endIf
+
+	end transaction
+
+	//Criando o browse da temporária
+  oBrowse := FWMBrowse():New()
+  oBrowse:SetAlias(cAliasTmp)
+  oBrowse:SetQueryIndex(aIndex)
+  oBrowse:SetTemporary(.T.)
+  oBrowse:SetFields(aBrowse)
+  oBrowse:DisableDetails()
+  oBrowse:SetDescription(cTitulo)
+	oBrowse:SetOwner(oPanel)
+  oBrowse:Activate()
+  SetFunName(cFunBkp)
+  RestArea(aArea)
+
 Return()
 
+Static Function MenuDef()
+	Local aRotina 	:= {}
+		
+	AADD(aRotina, {"Adicionar a Play List"			, { || HandleAddPlayList("Buscando Play List") }		, 0, 3, 0, Nil })
+	
+Return( aRotina )
 
 Static Function HandleSearch(cMensagem)
 
