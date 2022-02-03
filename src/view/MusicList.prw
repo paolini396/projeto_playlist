@@ -28,6 +28,8 @@ User Function MusicList()
 	Private cTableName := ""
 	Private aBrwData  as array
 	Private aRotina		:= MenuDef()
+	Private oFWTTable     as object
+
 
 	aSize	:= FWGetDialogSize( oMainWnd )
 	oDlgtela := MsDialog():New( aSize[1], aSize[2], aSize[3], aSize[4], cTitulo,,,, nOr( WS_VISIBLE, WS_POPUP ),,,,, .T.,,,, .F. )
@@ -126,69 +128,18 @@ Static Function FPanel02( oPanel )
 
 	Local aArea       := GetArea()
   Local cFunBkp     := FunName()
-  Local aFields     := {}
   Local aBrowse     := {}
   Local aIndex      := {}
 	Local aValores    := {}
-	local oFWTTable     as object
-
-	Local cSQLInsert := ""
-
-	Local nField      := 0
-	Local nValue     := 0
-
-	aAdd(aFields, { "TMP_BANDA", "C", 50, 0 })
-	aAdd(aFields, { "TMP_NOME",  "C", 50, 0 })
-
-	oFWTTable := FWTemporaryTable():new(cAliasTmp, aFields)
-
-	oFWTTable:AddIndex("01", {"TMP_BANDA"})
-	oFWTTable:AddIndex("02", {"TMP_NOME"})
-	oFWTTable:AddIndex("93", {"TMP_BANDA", "TMP_NOME"})
-
-	oFWTTable:Create()
-
-	cTableName := oFWTTable:getRealName()
-
-	//Definindo as colunas que serão usadas no browse
-  aAdd(aBrowse, {"Banda",    "TMP_BANDA", "C", 06, 0, "@!"})
-  aAdd(aBrowse, {"Nome", "TMP_NOME", "C", 50, 0, "@!"})
 
 	aAdd(aValores, {"Paolini", "Musica Paolini"})
 	aAdd(aValores, {"Teste banda", "Musica testando"})
 
-  //-------------------------------
-    //Inserção de dados via INSERT
-  //-------------------------------
- cSQLInsert := "INSERT INTO "
- cSQLInsert += cTableName
- cSQLInsert += " ("
-	for nField := 1 to Len(aFields)
-		cSQLInsert += aFields[nField][1]
-cSQLInsert += IIf(nField == len(aFields), "", ",")
-	next nField
-	cSQLInsert += ") "
-	cSQLInsert += "VALUES "
-	for nValue := 1 to Len(aValores)
-		cSQLInsert += " ("
-		cSQLInsert += "'"
-		cSQLInsert += aValores[nValue][1]
-		cSQLInsert += "'"
-		cSQLInsert += ","
-		cSQLInsert += "'"
-		cSQLInsert += aValores[nValue][2]
-		cSQLInsert += "'"
-		cSQLInsert += ")"
-		cSQLInsert += IIf(nValue == len(aValores), ";", ",")
-	next nValue
+	TmpTable(aValores)
 
-	begin transaction
-		if(TCSQLExec(cSQLInsert) < 0)
-				DisarmTransaction()
-				UserException(TCSQlError())
-		endIf
-
-	end transaction
+		//Definindo as colunas que serão usadas no browse
+  aAdd(aBrowse, {"Banda",    "TMP_BANDA", "C", 06, 0, "@!"})
+  aAdd(aBrowse, {"Nome", "TMP_NOME", "C", 50, 0, "@!"})
 
 	//Criando o browse da temporária
   oBrowse := FWMBrowse():New()
@@ -258,13 +209,79 @@ Static Function UpdateBrw()
 	aBrwData := {}
 	for nIndex := 1 to Len(oMusicList["data"])
 
-		aAdd(aBrwData, {oMusicList["data"][nIndex]["CTITULO"], oMusicList["data"][nIndex]["CBANDA"]})
+		aAdd(aBrwData, {oMusicList["data"][nIndex]["CBANDA"], oMusicList["data"][nIndex]["CTITULO"]})
 
 	Next nIndex
+
+	TmpTable(aBrwData)
 	
 	oBrowse:DeActivate(.T.)
-	oBrowse:SetDataArray()
-	oBrowse:SetArray(aBrwData)
+	oBrowse:SetDataTable(.T.)
+ 	oBrowse:SetAlias(cAliasTmp)
 	oBrowse:Activate()
 	oBrowse:UpdateBrowse(.T.)
+Return
+
+
+Static Function TmpTable(aValores)
+
+	Local aFields     := {}
+	Local nField      := 0
+	Local nValue      := 0
+
+	aAdd(aFields, { "TMP_BANDA", "C", 50, 0 })
+	aAdd(aFields, { "TMP_NOME",  "C", 50, 0 })
+
+	if (!Empty(cTableName) .and. ValType(oFWTTable) == 'O')
+			oFWTTable:Delete()
+	endIf
+
+	oFWTTable := FWTemporaryTable():new(cAliasTmp, aFields)
+
+	oFWTTable:AddIndex("01", {"TMP_BANDA"})
+	oFWTTable:AddIndex("02", {"TMP_NOME"})
+	oFWTTable:AddIndex("03", {"TMP_BANDA", "TMP_NOME"})
+
+	oFWTTable:Create()
+
+	cTableName := oFWTTable:getRealName()
+
+  //-------------------------------
+    //Inserção de dados via INSERT
+  //-------------------------------
+
+ 	cSQLInsert := "INSERT INTO "
+ 	cSQLInsert += cTableName
+ 	cSQLInsert += " ("
+
+	for nField := 1 to Len(aFields)
+		cSQLInsert += aFields[nField][1]
+		cSQLInsert += IIf(nField == len(aFields), "", ",")
+	next nField
+
+	cSQLInsert += ") "
+	cSQLInsert += "VALUES "
+
+	for nValue := 1 to Len(aValores)
+		cSQLInsert += " ("
+
+		for nField := 1 to Len(aValores[nValue])
+			cSQLInsert += "'"
+			cSQLInsert += aValores[nValue][nField]
+			cSQLInsert += "'"
+			cSQLInsert += IIf(nField == Len(aValores[nValue]), "", ",")
+		next nField
+		
+		cSQLInsert += ")"
+		cSQLInsert += IIf(nValue == len(aValores), ";", ",")
+	next nValue
+
+	begin transaction
+		if(TCSQLExec(cSQLInsert) < 0)
+				DisarmTransaction()
+				UserException(TCSQlError())
+		endIf
+
+	end transaction
+	
 Return
