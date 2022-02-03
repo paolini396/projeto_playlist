@@ -127,15 +127,14 @@ Return() */
 Static Function FPanel02( oPanel )
 
 	Local aArea       := GetArea()
-  Local cFunBkp     := FunName()
   Local aBrowse     := {}
   Local aIndex      := {}
-	Local aValores    := {}
+	Local aValues    := {}
 
-	aAdd(aValores, {"Paolini", "Musica Paolini"})
-	aAdd(aValores, {"Teste banda", "Musica testando"})
+	aAdd(aValues, {"Paolini", "Musica Paolini"})
+	aAdd(aValues, {"Teste banda", "Musica testando"})
 
-	TmpTable(aValores)
+	TmpTable(aValues)
 
 		//Definindo as colunas que serão usadas no browse
   aAdd(aBrowse, {"Banda",    "TMP_BANDA", "C", 06, 0, "@!"})
@@ -148,10 +147,9 @@ Static Function FPanel02( oPanel )
   oBrowse:SetTemporary(.T.)
   oBrowse:SetFields(aBrowse)
   oBrowse:DisableDetails()
-  oBrowse:SetDescription(cTitulo)
+  oBrowse:SetDescription("Selecione uma Música")
 	oBrowse:SetOwner(oPanel)
   oBrowse:Activate()
-  SetFunName(cFunBkp)
   RestArea(aArea)
 
 Return()
@@ -223,18 +221,18 @@ Static Function UpdateBrw()
 Return
 
 
-Static Function TmpTable(aValores)
+Static Function TmpTable(aValues)
 
 	Local aFields     := {}
 	Local nField      := 0
 	Local nValue      := 0
 
-	aAdd(aFields, { "TMP_BANDA", "C", 50, 0 })
-	aAdd(aFields, { "TMP_NOME",  "C", 50, 0 })
-
 	if (!Empty(cTableName) .and. ValType(oFWTTable) == 'O')
 			oFWTTable:Delete()
 	endIf
+
+	aAdd(aFields, { "TMP_BANDA", "C", 50, 0 })
+	aAdd(aFields, { "TMP_NOME",  "C", 50, 0 })
 
 	oFWTTable := FWTemporaryTable():new(cAliasTmp, aFields)
 
@@ -262,18 +260,18 @@ Static Function TmpTable(aValores)
 	cSQLInsert += ") "
 	cSQLInsert += "VALUES "
 
-	for nValue := 1 to Len(aValores)
+	for nValue := 1 to Len(aValues)
 		cSQLInsert += " ("
 
-		for nField := 1 to Len(aValores[nValue])
+		for nField := 1 to Len(aValues[nValue])
 			cSQLInsert += "'"
-			cSQLInsert += aValores[nValue][nField]
+			cSQLInsert += aValues[nValue][nField]
 			cSQLInsert += "'"
-			cSQLInsert += IIf(nField == Len(aValores[nValue]), "", ",")
+			cSQLInsert += IIf(nField == Len(aValues[nValue]), "", ",")
 		next nField
 		
 		cSQLInsert += ")"
-		cSQLInsert += IIf(nValue == len(aValores), ";", ",")
+		cSQLInsert += IIf(nValue == len(aValues), ";", ",")
 	next nValue
 
 	begin transaction
