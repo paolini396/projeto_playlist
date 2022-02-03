@@ -23,7 +23,6 @@ User Function MusicList()
 	Private oBrowse as object
 	Private oCbxFiltro as object
 	Private cSearch := Space(200)
-	Private cAliasQry := GetNextAlias()
 	Private cAliasTmp := GetNextAlias()
 	Private cTableName := ""
 	Private aBrwData  as array
@@ -70,95 +69,57 @@ Static Function FPanel01( oPanel )
 
 Return()
 
-
-/* Static Function FPanel02( oPanel )
-
-	Local aBrwModel as array
-	Local aBrwCol as array
-	Local aBrwSeek as array
-
-	Local nIndex as numeric
-
-	Local bAddPlayList	:=	Nil
-
-	aBrwModel := {}
-	aBrwCol := {}
-	aBrwData := {}
-	aBrwSeek := {}
-
-	aAdd(aBrwData, {"TESTE 01", "Paolini"} )
-	aAdd(aBrwData, {"TESTE 02", "Paolini"} )
-
-	aAdd(aBrwModel, {'Nome'        , '@!'    , 25, 10, 1})
-	aAdd(aBrwModel, {'Banda'  , '@!'    , 25, 00, 1})
-	
-	bAddPlayList := { || HandleSearch("Buscando Play List") }
-	TButton():New( 001, 185, "Adicionar a Play List",oPanel,bAddPlayList, 060, 013,,,, .T. )
-
-
-	for nIndex := 1 to Len(aBrwModel)
-
-		aAdd(aBrwCol, FwBrwColumn():New())
-
-		aBrwCol[Len(aBrwCol)]:SetData( &('{ || aBrwData[oBrowse:nAt,' + cValToChar(nIndex) + ']}') )
-		aBrwCol[Len(aBrwCol)]:SetTitle(aBrwModel[nIndex,1])
-		aBrwCol[Len(aBrwCol)]:SetPicture(aBrwModel[nIndex,2])
-		aBrwCol[Len(aBrwCol)]:SetSize(aBrwModel[nIndex,3])
-		aBrwCol[Len(aBrwCol)]:SetDecimal(aBrwModel[nIndex,4])
-		aBrwCol[Len(aBrwCol)]:SetAlign(aBrwModel[nIndex,5])
-
-	Next nIndex
-
-	oBrowse := FWBrowse():New()
-
-	//oBrowse:DisableReport()
-
-	oBrowse:SetDataArray()
-	oBrowse:SetArray(aBrwData)
-	oBrowse:SetColumns(aBrwCol)
-
-	oBrowse:SetOwner(oPanel)
-
-
-	oBrowse:Activate()
-
-Return() */
-
 Static Function FPanel02( oPanel )
 
 	Local aArea       := GetArea()
-  Local aBrowse     := {}
-  Local aIndex      := {}
-	Local aValues    := {}
-
-	aAdd(aValues, {"Paolini", "Musica Paolini"})
-	aAdd(aValues, {"Teste banda", "Musica testando"})
+	Local aIndex      := {}
+	Local aValues      := {}
 
 	TmpTable(aValues)
 
-		//Definindo as colunas que serão usadas no browse
-  aAdd(aBrowse, {"Banda",    "TMP_BANDA", "C", 06, 0, "@!"})
-  aAdd(aBrowse, {"Nome", "TMP_NOME", "C", 50, 0, "@!"})
-
 	//Criando o browse da temporária
-  oBrowse := FWMBrowse():New()
-  oBrowse:SetAlias(cAliasTmp)
-  oBrowse:SetQueryIndex(aIndex)
-  oBrowse:SetTemporary(.T.)
-  oBrowse:SetFields(aBrowse)
-  oBrowse:DisableDetails()
-  oBrowse:SetDescription("Selecione uma Música")
+	oBrowse := FWMBrowse():New()
+	oBrowse:SetAlias(cAliasTmp)
+	oBrowse:SetQueryIndex(aIndex)
+	oBrowse:SetTemporary(.T.)
+	oBrowse:SetFields(GetColumns())
+	oBrowse:DisableDetails()
+	oBrowse:SetDescription("Selecione uma Música")
 	oBrowse:SetOwner(oPanel)
-  oBrowse:Activate()
-  RestArea(aArea)
+	oBrowse:Activate()
+	RestArea(aArea)
 
 Return()
 
+
+Static Function ModalPL()
+
+	Local oModal
+	Local aColumns := {}
+
+	aAdd(aColumns, {"Codigo",    "A1_COD", "C", 06, 0, "@!"})
+  aAdd(aColumns, {"Nome",      "A1_NOME", "C", 50, 0, "@!"})
+
+	oModal := FWDialogModal():New()
+	oModal:SetEscClose(.T.)
+	oModal:setTitle("Lista de Play List")
+	oModal:setSubTitle("SubTitulo da Janela")
+
+	//Seta a largura e altura da janela em pixel
+	oModal:setSize(200, 500)
+
+	oModal:createDialog()
+	oModal:addCloseButton(nil, "Fechar") 
+
+	oModal:Activate()
+
+Return
+
 Static Function MenuDef()
 	Local aRotina 	:= {}
-		
+
 	AADD(aRotina, {"Adicionar a Play List"			, { || HandleAddPlayList("Buscando Play List") }		, 0, 3, 0, Nil })
-	
+
 Return( aRotina )
 
 Static Function HandleSearch(cMensagem)
@@ -179,13 +140,15 @@ Static Function HandleAddPlayList(cMensagem)
 
 	Default cMensagem	:=  ""
 
-	If !Empty(cMensagem)
-		FWMsgRun( ,{|| },"Aguarde",cMensagem)
+	ModalPL()
+
+/* 	If !Empty(cMensagem)
+		FWMsgRun( ,{||  },"Aguarde",cMensagem)
 	Else
 		CursorWait()
 		//UpdateBrw()
 		CursorArrow()
-	EndIf
+	EndIf */
 
 Return
 
@@ -204,19 +167,16 @@ Static Function UpdateBrw()
 		Return
 	EndIf
 
-	aBrwData := {}
+ 	aBrwData := {}
 	for nIndex := 1 to Len(oMusicList["data"])
 
 		aAdd(aBrwData, {oMusicList["data"][nIndex]["CBANDA"], oMusicList["data"][nIndex]["CTITULO"]})
 
-	Next nIndex
+	Next nIndex 
 
 	TmpTable(aBrwData)
 	
-	oBrowse:DeActivate(.T.)
-	oBrowse:SetDataTable(.T.)
  	oBrowse:SetAlias(cAliasTmp)
-	oBrowse:Activate()
 	oBrowse:UpdateBrowse(.T.)
 Return
 
@@ -247,6 +207,12 @@ Static Function TmpTable(aValues)
   //-------------------------------
     //Inserção de dados via INSERT
   //-------------------------------
+
+
+// Válida se existe valores para cadastrar na tabela temporária 
+	if (!Len(aValues) > 0)
+		Return
+	endIf
 
  	cSQLInsert := "INSERT INTO "
  	cSQLInsert += cTableName
@@ -283,3 +249,12 @@ Static Function TmpTable(aValues)
 	end transaction
 	
 Return
+
+
+Static Function GetColumns()
+  Local aColumns := {}
+
+	aAdd(aColumns, {"Banda",    "TMP_BANDA", "C", 06, 0, "@!"})
+  aAdd(aColumns, {"Nome", "TMP_NOME", "C", 50, 0, "@!"})
+
+Return aColumns
