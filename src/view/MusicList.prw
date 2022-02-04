@@ -92,7 +92,7 @@ Static Function FPanel02( oPanel )
 Return()
 
 
-Static Function ModalPL()
+Static Function ModalPList()
 
 	Local oModal
 	Local aColumns := {}
@@ -138,18 +138,7 @@ Return
 
 Static Function HandleAddPlayList(cMensagem)
 
-	Default cMensagem	:=  ""
-
-	ModalPL()
-
-/* 	If !Empty(cMensagem)
-		FWMsgRun( ,{||  },"Aguarde",cMensagem)
-	Else
-		CursorWait()
-		//UpdateBrw()
-		CursorArrow()
-	EndIf */
-
+	ModalPList()
 Return
 
 Static Function UpdateBrw()
@@ -178,6 +167,7 @@ Static Function UpdateBrw()
 	
  	oBrowse:SetAlias(cAliasTmp)
 	oBrowse:UpdateBrowse(.T.)
+	
 Return
 
 
